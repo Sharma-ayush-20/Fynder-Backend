@@ -9,19 +9,14 @@ const PORT = 4000;
 app.use(express.json());
 
 app.post("/signup", async (req, res) => {
-  const { firstName, lastName, email, password } = req.body;
-  const user = new UserModel({
-    firstName,
-    lastName,
-    email,
-    password,
-  });
+  const userData = req.body;
+  const user = new UserModel(userData);
 
   try {
     await user.save();
     res.send("User Created SuccessFully....");
   } catch (error) {
-    res.status(400).send("Error in creating User", error.message);
+    res.status(400).send(`Error in creating User: ${error.message}`);
   }
 });
 
@@ -42,7 +37,7 @@ app.patch("/updateuser", async (req, res) => {
   try {
     const userId = req.body.userId;
     const {firstName} = req.body;
-    const user = await UserModel.findByIdAndUpdate(userId, {firstName})
+    const user = await UserModel.findByIdAndUpdate(userId, {firstName}, {runValidators: true})
     if(user){
       res.status(200).send("User Updated")
     }else{
