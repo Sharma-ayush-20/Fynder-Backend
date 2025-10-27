@@ -25,6 +25,49 @@ app.post("/signup", async (req, res) => {
   }
 });
 
+//Feed API - Get /feed - get all the users from the database
+app.get("/feed", async (req, res) => {
+  try {
+    const allUser = await UserModel.find();
+    if (!allUser) {
+      res.status(400).send("No User Found");
+    }
+    res.send(allUser);
+  } catch (error) {
+    res.status(400).send("Error in gettind Users", error.message);
+  }
+});
+
+app.patch("/updateuser", async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    const {firstName} = req.body;
+    const user = await UserModel.findByIdAndUpdate(userId, {firstName})
+    if(user){
+      res.status(200).send("User Updated")
+    }else{
+      res.status(400).send("Problem in updating Data")
+    }
+  } catch (error) {
+    res.status(400).send("Error in gettind Users", error.message);
+  }
+});
+
+app.delete("/deleteuser", async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    const deleteUser = await UserModel.findByIdAndDelete(userId)
+    if(deleteUser){
+      res.status(200).send("User Deleted SuccessFully...")
+    }
+    else{
+      res.status(400).send("Problem in Deleting user")
+    }
+  } catch (error) {
+    res.status(400).send("Error in gettind Users", error.message);
+  }
+})
+
 connectDB()
   .then(() => {
     console.log(`Database Connected SuccessFully....`);
