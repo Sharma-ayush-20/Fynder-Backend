@@ -4,15 +4,17 @@ const { connectDB } = require("./config/database.js");
 const UserModel = require("./models/user-models.js");
 
 const app = express();
-
 const PORT = 4000;
 
+app.use(express.json());
+
 app.post("/signup", async (req, res) => {
+  const { firstName, lastName, email, password } = req.body;
   const user = new UserModel({
-    firstName: "Alex",
-    lastName: "Carey",
-    email: "Alex@Carey.com",
-    password: "Alex@123",
+    firstName,
+    lastName,
+    email,
+    password,
   });
 
   try {
