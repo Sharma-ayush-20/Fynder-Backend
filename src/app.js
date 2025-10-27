@@ -33,10 +33,19 @@ app.get("/feed", async (req, res) => {
   }
 });
 
-app.patch("/updateuser", async (req, res) => {
+app.patch("/updateuser/:userId", async (req, res) => {
   try {
-    const userId = req.body.userId;
+    const userId = req.params?.userId; 
     const updatedUserData = req.body;
+
+    const ALLOWED_UPDATES = ["userId", "photoUrl", "age", "about", "skills", "gender"] // this thing should be update
+
+    const isUpdateAllowed = Object.keys(updatedUserData).every((K) => ALLOWED_UPDATES.includes(K))
+    //in my model fields are there -> K = 1 fields includes in Allowed_updated then it return true
+
+    if(!isUpdateAllowed){
+      throw new Error("Update not allowed..")
+    }
     // console.log(updatedUserData)
     const user = await UserModel.findByIdAndUpdate(userId, updatedUserData, {runValidators: true})
     if(user){
