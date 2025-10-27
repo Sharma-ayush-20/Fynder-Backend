@@ -36,15 +36,16 @@ app.get("/feed", async (req, res) => {
 app.patch("/updateuser", async (req, res) => {
   try {
     const userId = req.body.userId;
-    const {firstName} = req.body;
-    const user = await UserModel.findByIdAndUpdate(userId, {firstName}, {runValidators: true})
+    const updatedUserData = req.body;
+    // console.log(updatedUserData)
+    const user = await UserModel.findByIdAndUpdate(userId, updatedUserData, {runValidators: true})
     if(user){
-      res.status(200).send("User Updated")
+      res.status(200).send("User Updated SuccessFully....")
     }else{
       res.status(400).send("Problem in updating Data")
     }
-  } catch (error) {
-    res.status(400).send("Error in gettind Users", error.message);
+  }  catch (error) {
+    res.status(400).send(`Error in updating user: ${error.message}`);
   }
 });
 
