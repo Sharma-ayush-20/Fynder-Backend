@@ -3,11 +3,15 @@ require("dotenv").config();
 const bcrypt = require("bcrypt");
 const { connectDB } = require("./config/database.js");
 const UserModel = require("./models/user-models.js");
+const cookieParser = require("cookie-parser");
+const { userAuth } = require("./middlewares/auth.js");
+const jwt = require("jsonwebtoken");
 
 const app = express();
 const PORT = 4000;
 
 app.use(express.json());
+app.use(cookieParser());
 
 //signup route
 app.post("/signup", async (req, res) => {
@@ -27,6 +31,12 @@ app.post("/signup", async (req, res) => {
       return res.status(400).json({ message: "please Fill all the details" });
     }
 
+    // Check if user already exists
+    const existingUser = await UserModel.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email already registered" });
+    }
+
     //encrypt the password
     const saltRound = 10;
     const hashPassword = await bcrypt.hash(password, saltRound);
@@ -41,6 +51,13 @@ app.post("/signup", async (req, res) => {
 
     //save in the database
     await user.save();
+
+    //create a token
+    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
+    //send in a cookie
+    res.cookie("token", token);
     return res.status(200).json({ message: "User Signup SuccessFully...." });
   } catch (error) {
     res
@@ -81,6 +98,12 @@ app.post("/login", async (req, res) => {
     if (!isMatchPassword) {
       return res.status(400).json({ message: "Invalid Credentials" });
     }
+    //create a token
+    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
+    //send in a cookie
+    res.cookie("token", token);
 
     return res.status(200).json({ message: "User Login SuccessFully...." });
   } catch (error) {
@@ -90,68 +113,16 @@ app.post("/login", async (req, res) => {
   }
 });
 
-//Feed API - Get /feed - get all the users from the database
-app.get("/feed", async (req, res) => {
+app.get("/profile", userAuth, async (req,res) => {
   try {
-    const allUser = await UserModel.find();
-    if (!allUser) {
-      res.status(400).send("No User Found");
-    }
-    res.send(allUser);
+    const user = req.user;
+    res.send(user)
   } catch (error) {
-    res.status(400).send("Error in gettind Users", error.message);
+    res
+      .status(500)
+      .json({ message: `Error in profile route: ${error.message}` });
   }
-});
-
-app.patch("/updateuser/:userId", async (req, res) => {
-  try {
-    const userId = req.params?.userId;
-    const updatedUserData = req.body;
-
-    const ALLOWED_UPDATES = [
-      "userId",
-      "photoUrl",
-      "age",
-      "about",
-      "skills",
-      "gender",
-    ]; // this thing should be update
-
-    const isUpdateAllowed = Object.keys(updatedUserData).every((K) =>
-      ALLOWED_UPDATES.includes(K)
-    );
-    //in my model fields are there -> K = 1 fields includes in Allowed_updated then it return true
-
-    if (!isUpdateAllowed) {
-      throw new Error("Update not allowed..");
-    }
-    // console.log(updatedUserData)
-    const user = await UserModel.findByIdAndUpdate(userId, updatedUserData, {
-      runValidators: true,
-    });
-    if (user) {
-      res.status(200).send("User Updated SuccessFully....");
-    } else {
-      res.status(400).send("Problem in updating Data");
-    }
-  } catch (error) {
-    res.status(400).send(`Error in updating user: ${error.message}`);
-  }
-});
-
-app.delete("/deleteuser", async (req, res) => {
-  try {
-    const userId = req.body.userId;
-    const deleteUser = await UserModel.findByIdAndDelete(userId);
-    if (deleteUser) {
-      res.status(200).send("User Deleted SuccessFully...");
-    } else {
-      res.status(400).send("Problem in Deleting user");
-    }
-  } catch (error) {
-    res.status(400).send("Error in gettind Users", error.message);
-  }
-});
+})
 
 connectDB()
   .then(() => {
