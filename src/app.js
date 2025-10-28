@@ -41,7 +41,48 @@ app.post("/signup", async (req, res) => {
 
     //save in the database
     await user.save();
-    return res.status(200).json({ message: "User Created SuccessFully...." });
+    return res.status(200).json({ message: "User Signup SuccessFully...." });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: `Error in creating User: ${error.message}` });
+  }
+});
+
+//login route
+app.post("/login", async (req, res) => {
+  try {
+    const userData = req.body;
+    const { email, password } = userData;
+    const ALLOWED_LOGIN = ["email", "password"];
+    const isLoginAllow = Object.keys(userData).every((K) =>
+      ALLOWED_LOGIN.includes(K)
+    );
+    //check only this field should be filled
+    if (!isLoginAllow) {
+      return res.status(400).json({ message: "Login not allowed.." });
+    }
+    if (!email) {
+      return res.status(400).json({ message: "Please provide email" });
+    }
+    const user = await UserModel.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid Credentials" });
+    }
+
+    if (!password) {
+      return res.status(400).json({ message: "Please provide password" });
+    }
+
+    //compare password
+    const isMatchPassword = await bcrypt.compare(password, user.password);
+
+    if (!isMatchPassword) {
+      return res.status(400).json({ message: "Invalid Credentials" });
+    }
+
+    return res.status(200).json({ message: "User Login SuccessFully...." });
   } catch (error) {
     res
       .status(500)
