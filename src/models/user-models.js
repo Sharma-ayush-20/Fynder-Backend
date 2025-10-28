@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema(
   {
@@ -22,21 +24,21 @@ const userSchema = new mongoose.Schema(
       unique: true,
       trim: true,
       lowercase: true,
-      validate(value){
-        if(!validator.isEmail(value)){
-          throw new Error("Email is not valid")
+      validate(value) {
+        if (!validator.isEmail(value)) {
+          throw new Error("Email is not valid");
         }
-      }
+      },
     },
     password: {
       type: String,
       required: true,
       trim: true,
-      validate(value){
-        if(!validator.isStrongPassword(value)){
-          throw new Error("please enter strong password")
+      validate(value) {
+        if (!validator.isStrongPassword(value)) {
+          throw new Error("please enter strong password");
         }
-      }
+      },
     },
     age: {
       type: Number,
@@ -75,6 +77,35 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+//instance method for jwt
+userSchema.methods.getJWT = async function () {
+  const user = this;
+  const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
+    expiresIn: "1d",
+  });
+  return token;
+};
+
+//instance method for verify password
+userSchema.methods.verifyPassword = async function (password) {
+  const user = this;
+  const isMatchPassword = await bcrypt.compare(password, user.password);
+  return isMatchPassword;
+};
+
+//hash the password automatically when change happen in password
+userSchema.pre("save", async function (next) {
+  const user = this;
+
+  // agar password change hua hai tabhi hash kar
+  if (!user.isModified("password")) return next();
+
+  const saltRound = 10;
+  const hashPassword = await bcrypt.hash(user.password, saltRound);
+  user.password = hashPassword;
+  next();
+});
 
 const UserModel = mongoose.model("User", userSchema);
 module.exports = UserModel;

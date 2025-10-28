@@ -37,25 +37,19 @@ app.post("/signup", async (req, res) => {
       return res.status(400).json({ message: "Email already registered" });
     }
 
-    //encrypt the password
-    const saltRound = 10;
-    const hashPassword = await bcrypt.hash(password, saltRound);
-
     //create a user
     const user = new UserModel({
       firstName,
       lastName,
       email,
-      password: hashPassword,
+      password,
     });
 
     //save in the database
     await user.save();
 
     //create a token
-    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1d",
-    });
+    const token = await user.getJWT();
     //send in a cookie
     res.cookie("token", token);
     return res.status(200).json({ message: "User Signup SuccessFully...." });
@@ -93,15 +87,14 @@ app.post("/login", async (req, res) => {
     }
 
     //compare password
-    const isMatchPassword = await bcrypt.compare(password, user.password);
+    const isMatchPassword = await user.verifyPassword(password)
 
     if (!isMatchPassword) {
       return res.status(400).json({ message: "Invalid Credentials" });
     }
+
     //create a token
-    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1d",
-    });
+    const token = await user.getJWT();
     //send in a cookie
     res.cookie("token", token);
 
