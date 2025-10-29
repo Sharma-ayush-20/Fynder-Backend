@@ -17,7 +17,7 @@ const userAuth = async (req, res, next) => {
     }
     //find user by userid
     const { _id } = decodeToken;
-    const user = await UserModel.findById(_id).select('-password');
+    const user = await UserModel.findById(_id);
     //check user is available
     if (!user) {
       return res.status(400).json({ message: "User not found!!!" });
