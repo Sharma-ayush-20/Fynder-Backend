@@ -91,10 +91,20 @@ authRouter.post("/login", async (req, res) => {
   } catch (error) {
     res
       .status(500)
-      .json({ message: `Error in creating User: ${error.message}` });
+      .json({ message: `Error in Login User: ${error.message}` });
   }
 });
 
 //logout route
+authRouter.post("/logout", async (req, res) => {
+    try {
+        res.clearCookie("token");
+        return res.status(200).json({message: "User logged out successfully..."})
+    } catch (error) {
+        res
+      .status(500)
+      .json({ message: `Error in logout User: ${error.message}` });
+    }
+})
 
 module.exports = {authRouter}
