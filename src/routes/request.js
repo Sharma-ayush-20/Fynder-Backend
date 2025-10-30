@@ -4,7 +4,6 @@ const {
   ConnectionRequestModel,
 } = require("../models/connectionRequest-models");
 const UserModel = require("../models/user-models");
-const { mongoose } = require("mongoose");
 const requestRouter = express.Router();
 
 //create api for interested and ignore connection Request
@@ -81,12 +80,17 @@ requestRouter.post(
   async (req, res) => {
     try {
       const { status, requestId } = req.params;
-      const loggedInUserId = req.user._id.toString();
+      const loggedInUserId = req.user._id;
 
       // Validate status
       const ALLOWED_STATUS = ["accepted", "rejected"];
       if (!ALLOWED_STATUS.includes(status)) {
         return res.status(400).json({ message: "Invalid status type" });
+      }
+      //check request id is valid or not
+      const connection = await ConnectionRequestModel.findById(requestId)
+      if(!connection){
+        return res.status(400).json({message: "Invalid request ID..."})
       }
 
       //find connectionRequest in connectionModel with using _id, toUserId, status
