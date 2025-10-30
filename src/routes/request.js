@@ -4,6 +4,7 @@ const {
   ConnectionRequestModel,
 } = require("../models/connectionRequest-models");
 const UserModel = require("../models/user-models");
+const { mongoose } = require("mongoose");
 const requestRouter = express.Router();
 
 //create api for interested and ignore connection Request
@@ -68,6 +69,54 @@ requestRouter.post(
       });
     } catch (error) {
       console.error("Error in requestRouter", error.message);
+      return res.status(500).json({ message: error.message });
+    }
+  }
+);
+
+//create api for accepted and rejected connection Request
+requestRouter.post(
+  "/request/review/:status/:requestId",
+  userAuth,
+  async (req, res) => {
+    try {
+      const { status, requestId } = req.params;
+      const loggedInUserId = req.user._id.toString();
+
+      // Validate status
+      const ALLOWED_STATUS = ["accepted", "rejected"];
+      if (!ALLOWED_STATUS.includes(status)) {
+        return res.status(400).json({ message: "Invalid status type" });
+      }
+
+      //find connectionRequest in connectionModel with using _id, toUserId, status
+      const yourConnectionRequest = await ConnectionRequestModel.findOne({
+        _id: requestId,
+        toUserId: loggedInUserId,
+        status: "interested"
+      })
+      // console.log(yourConnectionRequest)
+
+      if(!yourConnectionRequest){
+        return res
+          .status(404)
+          .json({ message: "Connection request does not exist.." });
+      }
+
+      yourConnectionRequest.status = status;
+      await yourConnectionRequest.save()
+
+      // Get sender info
+      const fromUserData = await UserModel.findById(yourConnectionRequest.fromUserId);
+     
+       // Return success response
+        return res.status(200).json({
+          message: `${req.user.firstName} ${status} ${fromUserData.firstName}'s request.`,
+          data: yourConnectionRequest,
+        });
+      
+    } catch (error) {
+      console.error("Error in /request/review route:", error.message);
       return res.status(500).json({ message: error.message });
     }
   }
