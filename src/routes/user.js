@@ -71,6 +71,11 @@ userRouter.get("/user/feed", userAuth, async (req, res) => {
     // take LoggedInUser 
     const LoggedInUser = req.user;
 
+    //add pagination for api
+    const limit = (req.query.limit) || 10;
+    const page = (req.query.page) || 1;
+    const skip = (page-1)*limit;
+ 
     //check connection Request that not need 
     const connectionRequest = await ConnectionRequestModel.find({
         $or: [
@@ -93,7 +98,7 @@ userRouter.get("/user/feed", userAuth, async (req, res) => {
             {_id: {$ne : LoggedInUser._id}},
             {_id: {$nin : Array.from(uniqueCnnectionRequest)}}
         ]
-    }).select("firstName lastName age gender about skills photoUrl")
+    }).select("firstName lastName age gender about skills photoUrl").skip(skip).limit(limit)
     // console.log(users)
 
     //check users are there for feed

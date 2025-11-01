@@ -58,3 +58,12 @@
 //     }
 //   }
 // );
+
+- feed API with query      
+- mongoose function = .skip() -> skip the data from starting 
+= .limit() => limit the data only limited data should be display
+- /feed?page=1&limit=10 - 1-10 
+- /feed?page=2&limit=10 - 11-20 
+- /feed?page=3&limit=10 - 21-30 -> (3-1)*10 = 20
+
+- skip logic -> (page-1)*limit -> (3-1)*10 = 20 => skip first 20
