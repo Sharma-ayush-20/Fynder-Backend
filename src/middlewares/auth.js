@@ -7,7 +7,7 @@ const userAuth = async (req, res, next) => {
     const { token } = req.cookies;
     //check token is availabe or not
     if (!token) {
-      return res.status(400).json({ message: "Please Login..." });
+      return res.status(401).json({ message: "Please Login..." });
     }
     //decode the token details
     const decodeToken = jwt.verify(token, process.env.JWT_SECRET);
