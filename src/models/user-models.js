@@ -44,6 +44,11 @@ const userSchema = new mongoose.Schema(
       type: Number,
       min: 18,
       max: 100,
+      validate(value){
+        if((value > 100) || (value < 18)){
+          throw new Error("Please enter age from 18 to 100")
+        }
+      }
     },
     gender: {
       type: String,

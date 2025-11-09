@@ -23,7 +23,7 @@ profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
   try {
     //only this field should be update
     if (!validateEditProfile(req)) {
-      return res.status(400).json({ message: "Edit not allowed..." });
+      return res.status(400).json({ message: "You are not allowed to edit this field." });
     }
     //take user id
     const userId = req.user._id;
@@ -38,13 +38,47 @@ profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
     }
     //send feedback for user update
     return res.status(200).json({
-      message: `${updatedUser.firstName} your profile is updated successfully...`,
+      message: `${updatedUser.firstName} your profile has been updated successfully! 🎉`,
       data: updatedUser,
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: `Error in edit user profile: ${error.message}` });
+    let friendlyMessage = "Something went wrong while updating your profile.";
+
+    // Agar validation error aaye toh
+    if (error.name === "ValidationError") {
+      console.log(error)
+      const field = Object.keys(error.errors)[0]; // jis field me error hai
+      const errMsg = error.errors[field].message;
+
+      // Custom friendly messages for each field
+      switch (field) {
+        case "firstName":
+          friendlyMessage = "First name should be between 4 to 25 characters.";
+          break;
+        case "lastName":
+          friendlyMessage = "Last name should be between 3 to 25 characters.";
+          break;
+        case "age":
+          friendlyMessage = "Please enter a valid age between 18 and 100.";
+          break;
+        case "gender":
+          friendlyMessage = "Gender must be male, female, or other.";
+          break;
+        case "about":
+          friendlyMessage = "About section should not exceed 500 characters.";
+          break;
+        case "skills":
+          friendlyMessage = "You can add up to 10 skills only.";
+          break;
+        case "photoUrl":
+          friendlyMessage = "Please enter a valid photo URL.";
+          break;
+        default:
+          friendlyMessage = errMsg; 
+      }
+    }
+
+    res.status(400).json({ message: friendlyMessage });
   }
 });
 
