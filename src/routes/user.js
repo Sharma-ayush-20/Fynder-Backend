@@ -16,7 +16,7 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
       status: "accepted",
       $or: [{ toUserId: LoggedInUser._id }, { fromUserId: LoggedInUser._id }],
     })
-      .populate("fromUserId", "firstName lastName age gender about skills")
+      .populate("fromUserId", "firstName lastName age gender about skills photoUrl")
       .populate("toUserId", "firstName lastName age gender about skills");
 
     if (isMatchConnection.length === 0) {
