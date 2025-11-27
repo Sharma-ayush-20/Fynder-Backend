@@ -5,6 +5,7 @@ const {
 } = require("../models/connectionRequest-models");
 const UserModel = require("../models/user-models");
 const requestRouter = express.Router();
+const sendEmail = require("../utils/sendEmail");
 
 //create api for interested and ignore connection Request
 requestRouter.post(
@@ -60,6 +61,48 @@ requestRouter.post(
       });
       const data = await connectionRequest.save();
 
+      //Email content
+      const actionText =
+        status === "interested"
+          ? "is interested in connecting with you on Fynder! ❤️"
+          : "has ignored your connection request.";
+
+      const subject = `${fromUserIdDetails.firstName} ${actionText}`;
+
+      const htmlBody = `
+      <h3>Hello ${toUserIdDetails.firstName}, 👋</h3>
+      <p><strong>${fromUserIdDetails.firstName}</strong> ${actionText}</p>
+
+      ${
+        status === "interested"
+          ? `<p>You can view their profile and connect back!</p>
+         <a href="https://fynder.site/profile/${fromUserIdDetails._id}"
+         style="background:black;color:white;padding:10px 18px;border-radius:6px;text-decoration:none;">
+         View Profile</a>`
+          : `<p>No worries! You can continue exploring and find new matches.</p>`
+      }
+
+        <p style="font-size:12px;color:#666;margin-top:20px;">
+        This is an automated email from Fynder.
+        </p>`;
+
+      const textBody = `
+          Hello ${toUserIdDetails.firstName},
+          ${fromUserIdDetails.firstName} ${actionText}
+          Visit Fynder: https://fynder.site
+          `;
+
+      // Send Email
+      const emailRes = await sendEmail.run(
+        "sharmaayush201104@gmail.com", // Receiver
+        "ayush@fynder.site", // Verified Sender
+        subject,
+        htmlBody,
+        textBody
+      );
+
+      console.log("Email Response: ", emailRes);
+
       return res.status(200).json({
         message: `${fromUserIdDetails?.firstName} ${
           status === "interested" ? "interested" : "ignored"
@@ -88,37 +131,38 @@ requestRouter.post(
         return res.status(400).json({ message: "Invalid status type" });
       }
       //check request id is valid or not
-      const connection = await ConnectionRequestModel.findById(requestId)
-      if(!connection){
-        return res.status(400).json({message: "Invalid request ID..."})
+      const connection = await ConnectionRequestModel.findById(requestId);
+      if (!connection) {
+        return res.status(400).json({ message: "Invalid request ID..." });
       }
 
       //find connectionRequest in connectionModel with using _id, toUserId, status
       const yourConnectionRequest = await ConnectionRequestModel.findOne({
         _id: requestId,
         toUserId: loggedInUserId,
-        status: "interested"
-      })
+        status: "interested",
+      });
       // console.log(yourConnectionRequest)
 
-      if(!yourConnectionRequest){
+      if (!yourConnectionRequest) {
         return res
           .status(404)
           .json({ message: "Connection request does not exist.." });
       }
 
       yourConnectionRequest.status = status;
-      await yourConnectionRequest.save()
+      await yourConnectionRequest.save();
 
       // Get sender info
-      const fromUserData = await UserModel.findById(yourConnectionRequest.fromUserId);
-     
-       // Return success response
-        return res.status(200).json({
-          message: `${req.user.firstName} ${status} ${fromUserData.firstName}'s request.`,
-          data: yourConnectionRequest,
-        });
-      
+      const fromUserData = await UserModel.findById(
+        yourConnectionRequest.fromUserId
+      );
+
+      // Return success response
+      return res.status(200).json({
+        message: `${req.user.firstName} ${status} ${fromUserData.firstName}'s request.`,
+        data: yourConnectionRequest,
+      });
     } catch (error) {
       console.error("Error in /request/review route:", error.message);
       return res.status(500).json({ message: error.message });
