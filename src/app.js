@@ -18,6 +18,7 @@ app.use(cors({
   origin: 'http://localhost:5173',
   credentials: true,
 }))
+app.use("/payment/webhook", express.raw({ type: "*/*" }));
 app.use(express.json());
 app.use(cookieParser());
 app.use("/", authRouter);

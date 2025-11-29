@@ -44,11 +44,11 @@ const userSchema = new mongoose.Schema(
       type: Number,
       min: 18,
       max: 100,
-      validate(value){
-        if((value > 100) || (value < 18)){
-          throw new Error("Please enter age from 18 to 100")
+      validate(value) {
+        if (value > 100 || value < 18) {
+          throw new Error("Please enter age from 18 to 100");
         }
-      }
+      },
     },
     gender: {
       type: String,
@@ -58,6 +58,24 @@ const userSchema = new mongoose.Schema(
           throw new Error("Gender is invalid");
         }
       },
+    },
+    isPremium: {
+      type: Boolean,
+      default: false,
+    },
+    memberShipType: {
+      type: String,
+      enum: ["silver", "gold"],
+      default: null,
+    },
+    memberShipPeriod: {
+      type: String,
+      enum: ["monthly", "yearly"],
+      default: null,
+    },
+    premiumExpiry: {
+      type: Date,
+      default: null,
     },
     about: {
       type: String,
