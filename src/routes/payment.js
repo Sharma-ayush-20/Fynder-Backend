@@ -90,7 +90,7 @@ paymentRouter.post("/payment/webhook", async (req, res) => {
     payment.status = paymentEntity.status;
     await payment.save();
 
-    const user = await UserModel.findOne({ _id: payment.userId });
+    const user = await UserModel.findOne({ _id: paymentEntity.notes.userId });
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -113,7 +113,7 @@ paymentRouter.post("/payment/webhook", async (req, res) => {
     return res
       .status(200)
       .json({ message: "Webhook verified & premium updated!" });
-      
+
   } catch (error) {
     console.log(error);
     return res.status(500).json({
