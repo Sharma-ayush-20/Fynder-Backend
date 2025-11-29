@@ -82,8 +82,8 @@ paymentRouter.post(
 
       //if the webhook is successfull then update the payment status in DB and update the user as a premium user
       //then return success response
-      const webhookData = JSON.parse(req.body);
-      const paymentEntity = webhookData.payload.payment.entity;
+      const data = JSON.parse(req.body.toString('utf-8'));
+      const paymentEntity = data.payload.payment.entity;
 
       const payment = await PaymentModel.findOne({
         orderId: paymentEntity.order_id,
