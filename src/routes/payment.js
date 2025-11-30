@@ -101,7 +101,7 @@ paymentRouter.post("/payment/webhook", async (req, res) => {
 
     // Upgrade user to premium
     user.isPremium = true;
-    user.memberShipType = paymentDetails.notes.membershipType;
+    user.memberShipType = paymentDetails.notes.memberShipType;
     user.memberShipPeriod = paymentDetails.notes.memberShipPeriod;
 
     // Set expiry based on plan
