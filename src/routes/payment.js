@@ -57,70 +57,120 @@ paymentRouter.post("/payment/create", userAuth, async (req, res) => {
 });
 
 //after order created -> razorpay will automatically call this API
-paymentRouter.post("/payment/webhook", async (req, res) => {
+// paymentRouter.post("/payment/webhook", async (req, res) => {
+//   try {
+//     console.log("🔥 Webhook HIT!", req.body);
+
+//     //take webhook signature
+//     const webhookSignature = req.get("X-Razorpay-Signature");
+
+//     const isWebhookValid = validateWebhookSignature(
+//       JSON.stringify(req.body),
+//       webhookSignature,
+//       process.env.RAZORPAY_WEBHOOK_SECRET
+//     );
+
+//     //check that webhook is valid or not
+//     if (!isWebhookValid) {
+//       return res.status(400).json({
+//         message: "Invalid webhook signature",
+//       });
+//     }
+
+//     //if the webhook is successfull then update the payment status in DB and update the user as a premium user
+//     //then return success response
+//     const paymentDetails = req.body.payload.payment.entity;
+
+//     const payment = await PaymentModel.findOne({
+//       orderId: paymentDetails.order_id,
+//     });
+
+//     if (!payment) {
+//       return res.status(404).json({ message: "Payment not found in DB" });
+//     }
+
+//     payment.status = paymentDetails.status;
+//     await payment.save();
+//     console.log("💾 Payment updated in DB");
+
+//     const user = await UserModel.findOne({ _id: payment.userId });
+
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+
+//     // Upgrade user to premium
+//     user.isPremium = true;
+//     user.memberShipType = paymentDetails.notes.memberShipType;
+//     user.memberShipPeriod = paymentDetails.notes.memberShipPeriod;
+
+//     // Set expiry based on plan
+//     if (user.memberShipPeriod === "monthly") {
+//       user.premiumExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+//     } else if (user.memberShipPeriod === "yearly") {
+//       user.premiumExpiry = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+//     }
+
+//     await user.save();
+//     console.log("🎉 User upgraded to premium");
+
+//     return res
+//       .status(200)
+//       .json({ message: "Webhook verified & premium updated!" });
+//   } catch (error) {
+//     console.log(error);
+//     return res.status(500).json({
+//       message: "Error in webhook -> " + error.message,
+//     });
+//   }
+// });
+//this webhook code is proper so we do verify payment and change the payment and user details in DB
+
+paymentRouter.post("/payment/verify", userAuth, async (req, res) => {
   try {
-    console.log("🔥 Webhook HIT!", req.body);
+    //take orderId and paymentId from req.body
+    const { paymentId, orderId } = req.body;
 
-    //take webhook signature
-    const webhookSignature = req.get("X-Razorpay-Signature");
-
-    const isWebhookValid = validateWebhookSignature(
-      JSON.stringify(req.body),
-      webhookSignature,
-      process.env.RAZORPAY_WEBHOOK_SECRET
-    );
-
-    //check that webhook is valid or not
-    if (!isWebhookValid) {
-      return res.status(400).json({
-        message: "Invalid webhook signature",
-      });
+    if (!paymentId || !orderId) {
+      return res
+        .status(400)
+        .json({ message: "payment and order Id is not present" });
     }
 
-    //if the webhook is successfull then update the payment status in DB and update the user as a premium user
-    //then return success response
-    const paymentDetails = req.body.payload.payment.entity;
+    const paymentInfo = await razorpayInstance.payments.fetch(paymentId);
 
-    const payment = await PaymentModel.findOne({
-      orderId: paymentDetails.order_id,
-    });
-
-    if (!payment) {
-      return res.status(404).json({ message: "Payment not found in DB" });
+    if (paymentInfo.status !== "captured") {
+      return res.status(400).json({ message: "Payment not verified!" });
     }
 
-    payment.status = paymentDetails.status;
+    // DB update in payment
+    const payment = await PaymentModel.findOne({ orderId });
+    payment.status = "captured";
+    payment.paymentId = paymentId;
     await payment.save();
-    console.log("💾 Payment updated in DB");
 
-    const user = await UserModel.findOne({ _id: payment.userId });
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Upgrade user to premium
+    //DB update in User
+    const user = await UserModel.findById(req.user._id);
     user.isPremium = true;
-    user.memberShipType = paymentDetails.notes.memberShipType;
-    user.memberShipPeriod = paymentDetails.notes.memberShipPeriod;
+    user.memberShipType = payment.notes.memberShipType;
+    user.memberShipPeriod = payment.notes.memberShipPeriod;
 
-    // Set expiry based on plan
+    // Expiry logic
     if (user.memberShipPeriod === "monthly") {
-      user.premiumExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-    } else if (user.memberShipPeriod === "yearly") {
-      user.premiumExpiry = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+      user.premiumExpiry = new Date(Date.now() + 30 * 86400000);
+    } else {
+      user.premiumExpiry = new Date(Date.now() + 365 * 86400000);
     }
 
     await user.save();
-    console.log("🎉 User upgraded to premium");
-
+    const updatedUser = await UserModel.findById(req.user._id);
     return res
       .status(200)
-      .json({ message: "Webhook verified & premium updated!" });
+      .json({ success: true, message: "Premium Activated!", user: updatedUser });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
-      message: "Error in webhook -> " + error.message,
+      message: error.message,
     });
   }
 });

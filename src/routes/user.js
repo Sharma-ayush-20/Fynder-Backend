@@ -98,7 +98,7 @@ userRouter.get("/user/feed", userAuth, async (req, res) => {
             {_id: {$ne : LoggedInUser._id}},
             {_id: {$nin : Array.from(uniqueCnnectionRequest)}}
         ]
-    }).select("firstName lastName age gender about skills photoUrl").skip(skip).limit(limit)
+    }).select("firstName lastName age gender about skills photoUrl isPremium memberShipType premiumExpiry").skip(skip).limit(limit)
     // console.log(users)
 
     //check users are there for feed
