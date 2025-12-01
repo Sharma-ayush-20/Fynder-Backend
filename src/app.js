@@ -4,12 +4,14 @@ require("./utils/cronJob.js")
 const { connectDB } = require("./config/database.js");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
+const { createServer } = require("http")
 
 const { authRouter } = require("./routes/auth.js");
 const { profileRouter } = require("./routes/profile.js");
 const { requestRouter } = require("./routes/request.js");
 const { userRouter } = require("./routes/user.js");
 const { paymentRouter } = require("./routes/payment.js");
+const initializeSocket = require("./utils/socket.js");
 
 const app = express();
 const PORT = 4000;
@@ -27,10 +29,13 @@ app.use("/", requestRouter)
 app.use("/", userRouter)
 app.use("/", paymentRouter)
 
+const server = createServer(app)
+initializeSocket(server)
+
 connectDB()
   .then(() => {
     console.log(`Database Connected SuccessFully....`);
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`Server is Listening at http://localhost:${PORT}`);
     });
   })
