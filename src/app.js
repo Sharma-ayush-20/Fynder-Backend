@@ -13,6 +13,7 @@ const { userRouter } = require("./routes/user.js");
 const { paymentRouter } = require("./routes/payment.js");
 const initializeSocket = require("./utils/socket.js");
 const { chatRouter } = require("./routes/chat.js");
+const { connectCloudinary } = require("./utils/Cloudinary.js");
 
 const app = express();
 const PORT = 4000;
@@ -21,7 +22,7 @@ app.use(cors({
   origin: 'http://localhost:5173',
   credentials: true,
 }))
-
+connectCloudinary()
 app.use(express.json());
 app.use(cookieParser());
 app.use("/", authRouter);
