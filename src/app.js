@@ -12,6 +12,7 @@ const { requestRouter } = require("./routes/request.js");
 const { userRouter } = require("./routes/user.js");
 const { paymentRouter } = require("./routes/payment.js");
 const initializeSocket = require("./utils/socket.js");
+const { chatRouter } = require("./routes/chat.js");
 
 const app = express();
 const PORT = 4000;
@@ -28,6 +29,7 @@ app.use("/", profileRouter)
 app.use("/", requestRouter)
 app.use("/", userRouter)
 app.use("/", paymentRouter)
+app.use("/", chatRouter);
 
 const server = createServer(app)
 initializeSocket(server)
