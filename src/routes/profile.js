@@ -159,5 +159,43 @@ profileRouter.get("/profile/:id", userAuth, async (req, res) => {
   }
 });
 
+profileRouter.delete("/profile/delete/:id", userAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Logged-in user ki id se compare
+    if (req.user._id.toString() !== id) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized! You cannot delete someone else's account.",
+      });
+    }
+
+    // Delete user
+    const user = await UserModel.findByIdAndDelete(id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found!",
+      });
+    }
+
+    // Remove auth cookie
+    res.clearCookie("token");
+
+    return res.status(200).json({
+      success: true,
+      message: "Your account has been deleted successfully!",
+    });
+
+  } catch (error) {
+    console.log("Delete Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete account",
+    });
+  }
+});
 
 module.exports = { profileRouter };
