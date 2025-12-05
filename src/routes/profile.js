@@ -36,7 +36,17 @@ profileRouter.patch(
       //take user id
       const userId = req.user._id;
       //take cloudinary url
-      const { firstName, lastName, about, age, gender, skills } = req.body;
+      const { firstName, lastName, about, age, gender } = req.body;
+      let skills = [];
+      if (req.body.skills) {
+        try {
+          skills = JSON.parse(req.body.skills);
+        } catch {
+          skills = Array.isArray(req.body.skills)
+            ? req.body.skills
+            : [req.body.skills];
+        }
+      }
       const updatedFields = {
         firstName,
         lastName,
@@ -188,7 +198,6 @@ profileRouter.delete("/profile/delete/:id", userAuth, async (req, res) => {
       success: true,
       message: "Your account has been deleted successfully!",
     });
-
   } catch (error) {
     console.log("Delete Error:", error);
     return res.status(500).json({
