@@ -5,7 +5,7 @@ const {
 } = require("../models/connectionRequest-models");
 const UserModel = require("../models/user-models");
 const requestRouter = express.Router();
-const sendEmail = require("../utils/sendEmail");
+// const sendEmail = require("../utils/sendEmail");
 
 //create api for interested and ignore connection Request
 requestRouter.post(
@@ -61,47 +61,47 @@ requestRouter.post(
       });
       const data = await connectionRequest.save();
 
-      //Email content
-      const actionText =
-        status === "interested"
-          ? "is interested in connecting with you on Fynder! ❤️"
-          : "has ignored your connection request.";
+      // //Email content
+      // const actionText =
+      //   status === "interested"
+      //     ? "is interested in connecting with you on Fynder! ❤️"
+      //     : "has ignored your connection request.";
 
-      const subject = `${fromUserIdDetails.firstName} ${actionText}`;
+      // const subject = `${fromUserIdDetails.firstName} ${actionText}`;
 
-      const htmlBody = `
-      <h3>Hello ${toUserIdDetails.firstName}, 👋</h3>
-      <p><strong>${fromUserIdDetails.firstName}</strong> ${actionText}</p>
+      // const htmlBody = `
+      // <h3>Hello ${toUserIdDetails.firstName}, 👋</h3>
+      // <p><strong>${fromUserIdDetails.firstName}</strong> ${actionText}</p>
 
-      ${
-        status === "interested"
-          ? `<p>You can view their profile and connect back!</p>
-         <a href="https://fynder.site/profile/${fromUserIdDetails._id}"
-         style="background:black;color:white;padding:10px 18px;border-radius:6px;text-decoration:none;">
-         View Profile</a>`
-          : `<p>No worries! You can continue exploring and find new matches.</p>`
-      }
+      // ${
+      //   status === "interested"
+      //     ? `<p>You can view their profile and connect back!</p>
+      //    <a href="https://fynder.site/profile/${fromUserIdDetails._id}"
+      //    style="background:black;color:white;padding:10px 18px;border-radius:6px;text-decoration:none;">
+      //    View Profile</a>`
+      //     : `<p>No worries! You can continue exploring and find new matches.</p>`
+      // }
 
-        <p style="font-size:12px;color:#666;margin-top:20px;">
-        This is an automated email from Fynder.
-        </p>`;
+      //   <p style="font-size:12px;color:#666;margin-top:20px;">
+      //   This is an automated email from Fynder.
+      //   </p>`;
 
-      const textBody = `
-          Hello ${toUserIdDetails.firstName},
-          ${fromUserIdDetails.firstName} ${actionText}
-          Visit Fynder: https://fynder.site
-          `;
+      // const textBody = `
+      //     Hello ${toUserIdDetails.firstName},
+      //     ${fromUserIdDetails.firstName} ${actionText}
+      //     Visit Fynder: https://fynder.site
+      //     `;
 
-      // Send Email
-      const emailRes = await sendEmail.run(
-        "sharmaayush201104@gmail.com", // Receiver
-        "ayush@fynder.site", // Verified Sender
-        subject,
-        htmlBody,
-        textBody
-      );
+      // // Send Email
+      // const emailRes = await sendEmail.run(
+      //   "sharmaayush201104@gmail.com", // Receiver
+      //   "ayush@fynder.site", // Verified Sender
+      //   subject,
+      //   htmlBody,
+      //   textBody
+      // );
 
-      console.log("Email Response: ", emailRes);
+      // console.log("Email Response: ", emailRes);
 
       return res.status(200).json({
         message: `${fromUserIdDetails?.firstName} ${
