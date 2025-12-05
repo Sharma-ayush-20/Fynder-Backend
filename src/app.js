@@ -1,5 +1,5 @@
-const express = require("express");
 require("dotenv").config();
+const express = require("express");
 require("./utils/cronJob.js")
 const { connectDB } = require("./config/database.js");
 const cookieParser = require("cookie-parser");
