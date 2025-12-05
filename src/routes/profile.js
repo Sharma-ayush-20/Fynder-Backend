@@ -27,100 +27,64 @@ profileRouter.patch(
   upload.single("photoUrl"),
   async (req, res) => {
     try {
-      //only this field should be update
-      if (!validateEditProfile(req)) {
-        return res
-          .status(400)
-          .json({ message: "You are not allowed to edit this field." });
-      }
-      //take user id
       const userId = req.user._id;
-      //take cloudinary url
-      const { firstName, lastName, about, age, gender } = req.body;
-      let skills = [];
+
+      // OLD values fetch karo (agar kuch missing aaye frontend se to)
+      const existingUser = await UserModel.findById(userId);
+
+      if (!existingUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const updatedFields = {
+        firstName: req.body.firstName || existingUser.firstName,
+        lastName: req.body.lastName || existingUser.lastName,
+        about: req.body.about || existingUser.about,
+        age: req.body.age || existingUser.age,
+        gender: req.body.gender || existingUser.gender,
+      };
+
+      // 🧠 Skills → always Array convert
       if (req.body.skills) {
         try {
-          skills = JSON.parse(req.body.skills);
+          updatedFields.skills = JSON.parse(req.body.skills);
         } catch {
-          skills = Array.isArray(req.body.skills)
+          updatedFields.skills = Array.isArray(req.body.skills)
             ? req.body.skills
             : [req.body.skills];
         }
+      } else {
+        updatedFields.skills = existingUser.skills;
       }
-      const updatedFields = {
-        firstName,
-        lastName,
-        age,
-        gender,
-        skills,
-        about,
-      };
+
+      // 📸 Only when updated file present
       if (req.file) {
-        const uploadResult = await cloudinary.uploader.upload(req.file.path, {
-          resource_type: "image",
-        });
+        const uploadResult = await cloudinary.uploader.upload(req.file.path);
         updatedFields.photoUrl = uploadResult.secure_url;
+      } else {
+        updatedFields.photoUrl = existingUser.photoUrl;
       }
-      //find user by user id and update the user details
+
       const updatedUser = await UserModel.findByIdAndUpdate(
         userId,
         updatedFields,
-        {
-          runValidators: true, //run validate in update
-          new: true, //return the updated document
-        }
+        { new: true, runValidators: true }
       ).select("-password");
-      //if user not updated or found
-      if (!updatedUser) {
-        return res.status(400).json({ message: "user not found" });
-      }
-      //send feedback for user update
+
       return res.status(200).json({
-        message: `${updatedUser.firstName} your profile has been updated successfully! 🎉`,
+        message: `${updatedUser.firstName}, your profile updated successfully! 🎉`,
         data: updatedUser,
       });
+
     } catch (error) {
-      let friendlyMessage = "Something went wrong while updating your profile.";
-
-      // Agar validation error aaye toh
-      if (error.name === "ValidationError") {
-        console.log(error);
-        const field = Object.keys(error.errors)[0]; // jis field me error hai
-        const errMsg = error.errors[field].message;
-
-        // Custom friendly messages for each field
-        switch (field) {
-          case "firstName":
-            friendlyMessage =
-              "First name should be between 4 to 25 characters.";
-            break;
-          case "lastName":
-            friendlyMessage = "Last name should be between 3 to 25 characters.";
-            break;
-          case "age":
-            friendlyMessage = "Please enter a valid age between 18 and 100.";
-            break;
-          case "gender":
-            friendlyMessage = "Gender must be male, female, or other.";
-            break;
-          case "about":
-            friendlyMessage = "About section should not exceed 500 characters.";
-            break;
-          case "skills":
-            friendlyMessage = "You can add up to 10 skills only.";
-            break;
-          case "photoUrl":
-            friendlyMessage = "Please enter a valid photo URL.";
-            break;
-          default:
-            friendlyMessage = errMsg;
-        }
-      }
-
-      res.status(400).json({ message: friendlyMessage });
+      console.log("UPDATE ERROR:", error);
+      return res.status(400).json({
+        message: error.message || "Something went wrong while updating profile.",
+      });
     }
   }
 );
+
 
 //change the password specifically
 profileRouter.post("/profile/password", userAuth, async (req, res) => {
