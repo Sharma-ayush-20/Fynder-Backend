@@ -47,7 +47,12 @@ authRouter.post("/signup", async (req, res) => {
     //create a token
     const token = await user.getJWT();
     //send in a cookie
-    res.cookie("token", token);
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      path: "/",
+    });
     return res.status(200).json({
       message: `Welcome aboard, ${user.firstName}! 🎉 Your account has been created successfully.`,
       user,
@@ -120,14 +125,17 @@ authRouter.post("/login", async (req, res) => {
     //create a token
     const token = await user.getJWT();
     //send in a cookie
-    res.cookie("token", token);
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      path: "/",
+    });
 
-    return res
-      .status(200)
-      .json({
-        message: `Login successful! 🚀 Welcome back, ${user.firstName}.`,
-        user,
-      });
+    return res.status(200).json({
+      message: `Login successful! 🚀 Welcome back, ${user.firstName}.`,
+      user,
+    });
   } catch (error) {
     let friendlyMessage = "Something went wrong while login. Please try again.";
     // Handle validation errors from Mongoose
