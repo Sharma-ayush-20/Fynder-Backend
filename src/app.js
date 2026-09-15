@@ -22,7 +22,7 @@ app.set("trust proxy", 1);
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://fynder.site"],
+    origin: ["http://localhost:5173", "https://fynder.site", "https://fynder-frontend.vercel.app/"],
     credentials: true,
   })
 );
